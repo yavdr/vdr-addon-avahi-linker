@@ -1,0 +1,2 @@
+vdr-addon-avahi-linker
+======================
