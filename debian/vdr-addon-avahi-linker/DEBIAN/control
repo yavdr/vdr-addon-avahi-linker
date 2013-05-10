@@ -1,0 +1,15 @@
+Package: vdr-addon-avahi-linker
+Version: 0.0.1-0yavdr0
+Architecture: all
+Maintainer: Alexander Grothe <seahawk1986@hotmail.com>
+Installed-Size: 107
+Depends: avahi-daemon, nfs-kernel-server, python, libnss-mdns, python-avahi, nfs-common, autofs, python-dbus, python-gobject
+Suggests: vdr
+Conflicts: vdr-addon-avahi-mounter
+Replaces: vdr-addon-avahi-mounter
+Provides: vdr-addon-avahi-mounter
+Section: video
+Priority: extra
+Homepage: https://github.com/seahawk1986/arch-avahi-linker
+Description: avahi-linker an VDR-Addon
+ avahi-linker an VDR-Addon

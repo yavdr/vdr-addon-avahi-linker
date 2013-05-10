@@ -1,0 +1,6 @@
+/etc/avahi/services/vdr-video.service
+/etc/avahi/services/vdr-picture.service
+/etc/avahi/services/vdr-vdr.service
+/etc/avahi/services/vdr-audio.service
+/etc/init/avahi-linker.conf
+/etc/avahi-linker/default.cfg
