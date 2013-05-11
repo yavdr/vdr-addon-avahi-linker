@@ -1,20 +1,10 @@
 #!/bin/sh
 
 if [ install = "$1" -o upgrade = "$1" ]; then 
-   dpkg-divert --package vdr-addon-avahi-linker --add --rename \
-           --divert /etc/auto.master.divert /etc/auto.master
-   mkdir -p /etc/avahi/services.divert
-   for service in vdr-picture.service vdr-vdr.service vdr-audio.service \
-           vdr-video.service
-       do
-           dpkg-divert --package vdr-addon-avahi-linker --add --rename \
-               --divert "/etc/avahi/services.divert/$service.divert" \
-               "/etc/avahi/services/$service"
-       done
-   #dpkg-divert --package vdr-addon-avahi-linker --remove --rename \
-   #   --divert /usr/bin/avahi-mounter.dont-remove /usr/bin/avahi-mounter
-   #dpkg-divert --package vdr-addon-avahi-linker --remove --rename \
-   #   --divert /etc/init/avahi-mounter.conf.dont-remove /etc/init/avahi-mounter.conf
+   dpkg-divert --package vdr-addon-avahi-mounter --remove --rename \
+      --divert /usr/bin/avahi-mounter.dont-remove /usr/bin/avahi-mounter
+   dpkg-divert --package vdr-addon-avahi-mounter --remove --rename \
+      --divert /etc/init/avahi-mounter.conf.dont-remove /etc/init/avahi-mounter.conf
 fi  
 
 #DEBHELPER#

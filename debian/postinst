@@ -2,8 +2,7 @@
 
 case "$1" in
     configure)
-	restart autofs
-        start avahi-linker ||:
+
         chown -R vdr:vdr /var/lib/vdr
         ;;
 
