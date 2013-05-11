@@ -1,8 +1,35 @@
 #!/usr/bin/make -f
 
 export DH_VERBOSE=1
+
 %:
 	dh  $@
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	dh_install
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean
 
+# Build architecture-independent files here.
+binary-indep: build install
+# Nothing to do
+	dh_testdir
+	dh_testroot
 
+	dh_installdocs
+	dh_installchangelogs
+	dh_link
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+# Build architecture-dependent files here.
+binary-arch: build install
 
