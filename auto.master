@@ -20,4 +20,4 @@
 # same will not be seen as the first read key seen takes
 # precedence.
 #
-#+auto.master
++auto.master
