@@ -22,6 +22,7 @@ $(INSTALL):
 	mkdir -p $(DESTDIR)/etc/avahi-linker
 	install -m 755 avahi-linker.py $(DESTDIR)/usr/bin/avahi-linker
 	install avahi-linker.conf $(DESTDIR)/etc/init
+        install avahi-mounter.override $(DESTDIR)/etc/init
 	install auto.master $(DESTDIR)/etc
 	#install -m 644 /etc/avahi/services/* $(DESTDIR)/etc/avahi/services
 	install -m 500 config/default.cfg $(DESTDIR)/etc/avahi-linker
