@@ -1,3 +1,27 @@
+vdr-addon-avahi-linker (0.0.3.2-0yavdr0~precise) precise; urgency=medium
+
+  * update value in /etc/default/avahi-linker 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 11:35:15 +0100
+
+vdr-addon-avahi-linker (0.0.3.1-0yavdr0~precise) precise; urgency=medium
+
+  * fix some install actions 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 11:28:32 +0100
+
+vdr-addon-avahi-linker (0.0.3-0yavdr0) precise; urgency=medium
+
+  * update  
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 11:19:26 +0100
+
+vdr-addon-avahi-linker (0.0.2-0yavdr0) precise; urgency=medium
+
+  *  update
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 10:54:48 +0100
+
 vdr-addon-avahi-linker (0.0.1-0yavdr0) precise; urgency=medium
 
   * Initial release 
