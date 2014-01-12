@@ -3,16 +3,6 @@
 if [ remove = "$1" ]; then 
    dpkg-divert --package vdr-addon-avahi-linker --remove --rename \
       --divert /etc/auto.master.divert /etc/auto.master
-   #for service in vdr-picture.service vdr-vdr.service vdr-audio.service \
-   #        vdr-video.service
-   #    do
-   #        dpkg-divert --package vdr-addon-avahi-linker --remove --rename \
-   #            --divert "/etc/avahi/services.divert/$service.divert" \
-   #            "/etc/avahi/services/$service"
-   #    done
-   #rmdir /etc/avahi/services.divert
-   #dpkg-divert --package vdr-addon-avahi-mounter --remove --rename \
-   #   --divert /etc/init/avahi-mounter.conf.dont-remove /etc/init/avahi-mounter.conf
 fi 
 
 #DEBHELPER#
