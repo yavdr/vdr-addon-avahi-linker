@@ -12,7 +12,8 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, ${vdr:Depends}, avahi-daemon, nfs-k
 Suggests: vdr
 Description: avahi-linker an VDR-Addon  
  avahi-linker an VDR-Addon                                            
-#Provides: vdr-addon-avahi-mounter
-#Conflicts: vdr-addon-avahi-mounter
-#Replaces: vdr-addon-avahi-mounter
+Breaks: vdr-addon-avahi-mounter (<< 20131206181034testing)
+Provides: vdr-addon-avahi-mounter
+Conflicts: vdr-addon-avahi-mounter
+Replaces: vdr-addon-avahi-mounter (<< 20131206181034testing)
 
