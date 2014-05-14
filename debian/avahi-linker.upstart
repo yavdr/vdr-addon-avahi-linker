@@ -1,0 +1,29 @@
+start on started avahi-daemon
+stop on stopping avahi-daemon
+
+respawn
+kill timeout 20
+kill signal INT
+
+pre-start script
+CONFIG="/etc/default/avahi-linker"
+[ ! -f "$CONFIG" ] && { stop; exit 0; }
+. "$CONFIG"
+if [ $ENABLED -lt 1 ]; then
+  stop; exit 0
+fi
+
+end script
+
+script
+
+if [ -e /etc/default/locale ]; then
+. /etc/default/locale
+fi
+
+if [ -n "$LANG" ]; then
+   export LANG
+fi
+
+exec /usr/bin/avahi-linker
+end script
