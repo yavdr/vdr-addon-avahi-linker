@@ -1,13 +1,15 @@
 #!/bin/sh
-
-if [ install = "$1" -o upgrade = "$1" ]; then 
-   
-   if ! grep -q "^/net" /etc/auto.master; then 
-       echo "/net    -hosts --timeout=60" >> /etc/auto.master
-   fi
-   #stop avahi-mounter 2&>1 /dev/null ||:
-   mkdir -p /net
-   fi  
-
+set -e
+PKG=vdr-addon-avahi-linker
+if [ "$1" = configure ] ; then
+        for f in auto.master
+        do
+                dpkg-divert --add --package ${PKG} --rename \
+                        --divert /etc/$f.distrib /etc/$f
+                [ \! -e /etc/$f -o -L /etc/$f ] && ln -sf /etc/site/$f /etc/$f
+        done
+        #stop avahi-mounter 2&>1 /dev/null ||:
+        mkdir -p /net
+fi
 #DEBHELPER#
-
+exit 0
