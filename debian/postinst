@@ -2,9 +2,8 @@
 
 case "$1" in
     configure)
-	restart autofs
-        start avahi-linker ||:
-        chown -R vdr:vdr /var/lib/vdr
+        kill -HUP $(pidof automount) ||:
+        #start avahi-linker ||:
         ;;
 
 
