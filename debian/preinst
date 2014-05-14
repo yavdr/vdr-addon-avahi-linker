@@ -2,13 +2,6 @@
 set -e
 PKG=vdr-addon-avahi-linker
 if [ "$1" = configure ] ; then
-        for f in auto.master
-        do
-                dpkg-divert --add --package ${PKG} --rename \
-                        --divert /etc/$f.distrib /etc/$f
-                [ \! -e /etc/$f -o -L /etc/$f ] && ln -sf /etc/site/$f /etc/$f
-        done
-        #stop avahi-mounter 2&>1 /dev/null ||:
         mkdir -p /net
 fi
 #DEBHELPER#
