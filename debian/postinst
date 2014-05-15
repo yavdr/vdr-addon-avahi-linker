@@ -3,7 +3,7 @@
 case "$1" in
     configure)
         kill -HUP $(pidof automount) ||:
-        #start avahi-linker ||:
+        start avahi-linker ||:
         ;;
 
 
