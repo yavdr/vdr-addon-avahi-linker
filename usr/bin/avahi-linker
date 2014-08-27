@@ -470,7 +470,7 @@ class nfsService:
         self.counter = 0
         self.job = None
         self.safe_chars = re.compile("\d*\w*\ *\.*-*")
-        self.safe_name = self.safe_chars.findall(self.name)
+        self.safe_name = "".join(self.safe_chars.findall(self.name))
         for attribute in self.txt:
             key, value = u"".join(map(chr, (c for c in attribute))).split("=")
             if key == "path":
