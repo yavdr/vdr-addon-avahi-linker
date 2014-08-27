@@ -469,6 +469,8 @@ class nfsService:
         self.update_recdir = self.config.update_recdir
         self.counter = 0
         self.job = None
+        self.safe_chars = re.compile("\d*\w*\ *\.*-*")
+        self.safe_name = self.safe_chars.findall(self.name)
         for attribute in self.txt:
             key, value = u"".join(map(chr, (c for c in attribute))).split("=")
             if key == "path":
@@ -502,6 +504,7 @@ class nfsService:
         # return None if attribute is undefined
         return self.__dict__.get(attr, None)
 
+
     def get_origin(self):
         return os.path.join(
                      self.config.autofsdir,
@@ -515,7 +518,8 @@ class nfsService:
             self.config.vdrdir,
             (lambda category: category if category is not None else "")(
                 self.category),
-            (lambda host: host.split('.')[0])(self.host),
+            #(lambda host: host.split('.')[0])(self.host),
+            self.safe_name,
                 )+self.config.nfs_suffix
 
     def get_target(self):
@@ -524,14 +528,16 @@ class nfsService:
                 self.basedir,
                 (lambda category: category if category is not None else "")(
                     self.category),
-                (lambda host: host.split('.')[0])(self.host),
+                #(lambda host: host.split('.')[0])(self.host),
+                self.safe_name,
                 )+"(for {0})".format(self.config.hostname)
         else:
             return os.path.join(
                 self.basedir,
                 (lambda category: category if category is not None else "")(
                     self.category),
-                (lambda host: host.split('.')[0])(self.host),
+                #(lambda host: host.split('.')[0])(self.host),
+                self.safe_name
                 )+self.config.nfs_suffix
 
     def create_link(self):
