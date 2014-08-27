@@ -1,1 +1,1 @@
-/net    -hosts --timeout=60
+/net    -hosts -bg,intr,soft --timeout=60
