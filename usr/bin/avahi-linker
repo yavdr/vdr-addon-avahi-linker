@@ -583,6 +583,9 @@ class nfsService:
             mkdir_p(os.path.dirname(self.target))
             if self.subtype == "vdr":
                 self.target = "%s for %s" % (self.target, self.config.hostname)
+            logging.debug("creating symlink from {origin} to {target} for {share}".format(
+                  origin=self.origin, target=self.target, share=self.sharename
+                )
             os.symlink(self.origin, self.target)
             logging.debug(
                 "created symlink from {origin} to {target} for {share}".format(
@@ -593,6 +596,9 @@ class nfsService:
     def create_extralink(self, target):
         if target and not os.path.islink(target) and not os.path.exists(target):
             mkdir_p(os.path.dirname(target))
+            logging.debug("creating symlink from {origin} to {target}".format(
+                  origin=self.target, target=target
+                )
             os.symlink(self.target, target)
             logging.info("created additional symlink for remote VDR dir")
 
