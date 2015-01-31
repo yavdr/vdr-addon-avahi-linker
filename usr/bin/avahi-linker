@@ -586,6 +586,7 @@ class nfsService:
             logging.debug("creating symlink from {origin} to {target} for {share}".format(
                   origin=self.origin, target=self.target, share=self.sharename
                 )
+            )
             os.symlink(self.origin, self.target)
             logging.debug(
                 "created symlink from {origin} to {target} for {share}".format(
@@ -599,6 +600,7 @@ class nfsService:
             logging.debug("creating symlink from {origin} to {target}".format(
                   origin=self.target, target=target
                 )
+            )
             os.symlink(self.target, target)
             logging.info("created additional symlink for remote VDR dir")
 
