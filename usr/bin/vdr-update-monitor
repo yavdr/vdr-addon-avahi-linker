@@ -5,7 +5,7 @@ from gi.repository import Gio
 import datetime
 import argparse
 
-argparser = argparse.ArgumentParser(description='Copy packages in Launchpad.')
+argparser = argparse.ArgumentParser(description='watch vdr .update file an propagate changes via udp')
 argparser.add_argument('-w', '--watch-file', metavar='VIDEODIR/.update',
                        dest='watch_file', default='/srv/vdr/video/.update',
                        help='.update file in vdr video dir (default: /srv/vdr/video/.update)')
