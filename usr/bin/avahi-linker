@@ -129,6 +129,7 @@ class checkDBus4VDR:
 
 
 class Config:
+    unsafe_chars = ("<", ">", "?", "&", '"', ":", "|", "\\", "*")
     def __init__(self, options):
         self.vdr_running = False
         self.options = options
@@ -156,6 +157,13 @@ class Config:
         self.static_suffix = self.get_setting('options', 'static_suffix', "")
         self.fat_safe_names = self.get_settingb('options', 'fat_safe_names',
                                                     False)
+        if self.fat_safe_names:
+            for char in self.unsafe_chars:
+                self.nfs_prefix = self.nfs_prefix.replace(char,
+                                                    "#{0:x}".format(ord(char)))
+            self.nfs_suffix = self.nfs_suffix.replace(char,
+                                                    "#{0:x}".format(ord(char)))
+
         self.dbus2vdr = self.get_settingb('options', 'dbus2vdr', False)
         self.svdrp_port = int(self.get_setting('options', 'svdrp_port', 6419))
 
@@ -496,7 +504,16 @@ class nfsService:
                 self.category = value
                 if self.config.use_i18n is True:
                     self.category = get_translation(self.category)[0]
-        self.basedir = os.path.join(self.config.mediadir,self.subtype)
+        if self.subtype:
+            self.basedir = os.path.join(self.config.mediadir,self.subtype)
+        else:
+            logging.error(
+                "subtype for service '{0}' not set!\nattributes: {1}".format(
+                 self.name,
+                 u"".join(map(chr, (c for c in attribute)))
+                )
+            )
+            return
         self.origin = self.get_origin()
         self.target = self.get_target()
         if self.subtype == "vdr":
@@ -583,24 +600,22 @@ class nfsService:
             mkdir_p(os.path.dirname(self.target))
             if self.subtype == "vdr":
                 self.target = "%s for %s" % (self.target, self.config.hostname)
-            logging.debug("creating symlink from {origin} to {target} for {share}".format(
-                  origin=self.origin, target=self.target, share=self.sharename
-                )
-            )
-            os.symlink(self.origin, self.target)
-            logging.debug(
+            try:
+                os.symlink(self.origin, self.target)
+                logging.debug(
                 "created symlink from {origin} to {target} for {share}".format(
                   origin=self.origin, target=self.target, share=self.sharename
+                    )
                 )
+            except:
+                logging.debug(
+                    "symlink from {origin} to {target} for {share} already exists".format(
+                    origin=self.origin, target=self.target, share=self.sharename)
             )
 
     def create_extralink(self, target):
         if target and not os.path.islink(target) and not os.path.exists(target):
             mkdir_p(os.path.dirname(target))
-            logging.debug("creating symlink from {origin} to {target}".format(
-                  origin=self.target, target=target
-                )
-            )
             os.symlink(self.target, target)
             logging.info("created additional symlink for remote VDR dir")
 
