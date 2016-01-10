@@ -8,7 +8,7 @@ Homepage: https://github.com/seahawk1986/arch-avahi-linker
 
 Package: vdr-addon-avahi-linker
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${vdr:Depends}, avahi-daemon, nfs-kernel-server, python3, libnss-mdns, nfs-common, autofs, python3-dbus, python3-gi
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${vdr:Depends}, avahi-daemon, nfs-kernel-server, python, libnss-mdns, python-avahi, nfs-common, autofs, python-dbus, python-gobject, python-ipaddr, python3-dbus, python3-gi
 Suggests: vdr
 Description: avahi-linker an VDR-Addon  
  avahi-linker an VDR-Addon                                            
