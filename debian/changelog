@@ -1,3 +1,9 @@
+vdr-addon-avahi-linker (0.0.3.3-0yavdr1~trustyubuntu1) trusty; urgency=medium
+
+  * fix dependencies 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 10 Jan 2016 17:39:36 +0100
+
 vdr-addon-avahi-linker (0.0.3.3-0yavdr1~trusty) trusty; urgency=medium
 
   * rebuild
