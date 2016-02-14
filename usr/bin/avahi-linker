@@ -154,8 +154,8 @@ class SVDRPConnection:
                             success = True
                         answer.append((num, flag, message))
                     return success, answer
-            except ConnectionError:
-                logging.warn("SVDRP connection refused by VDR")
+            except OSError as e:
+                logging.warn("could not connect to vdr: %s", e.strerror)
                 return False, None
             except Exception as error:
                 logging.exception(error)
@@ -298,7 +298,9 @@ class Config(BaseClass):
             with codecs.open(self.options['config'], 'r', encoding='utf-8'
                              ) as f:
                 parser.readfp(f)
-        except (PermissionError, FileNotFoundError):
+        except OSError as e:
+            logging.exception("could not read config file %s: %s",
+                              self.options['config'], e.strerror)
             sys.exit("could not read config file {}".format(
                 self.options['config']))
         configdir = os.path.dirname(self.options['config'])
@@ -308,12 +310,12 @@ class Config(BaseClass):
             try:
                 with codecs.open(opt_config, 'r', encoding='utf-8') as f:
                     parser.readfp(f)
-            except FileNotFoundError:
-                print("{} not found".format(opt_config))
-            except PermissionError:
-                print("not allowed to access {}".format(opt_config))
+            except OSError as e:
+                pass
             except Exception as e:
                 print(e)
+            else:
+                print("read config file {}".format(opt_config))
         return parser
 
     def set_up_netlist(self, netlist_name, default=[]):
@@ -508,7 +510,7 @@ class AvahiService:
             'port': port,
             'payload': self.read_payload(raw_payload),
             'flags': flags,
-            'sharename': sharename
+            'sharename': sharename,
         }
         _sharename = "{share} on {host}: {txt}".format(share=name,
                                                        host=host,
@@ -524,9 +526,9 @@ class AvahiService:
             [ip_range for ip_range in self.config.ip_blacklist
              if ip in ip_range]
         ):
-            if sharename not in self.linked:
+            if _sharename not in self.linked:
                 share = nfsService(attributes, self.config)
-                self.linked[sharename] = share
+                self.linked[_sharename] = share
             else:
                 logging.debug(
                     "skipped share {0} on {1}: already used".format(name,
@@ -578,7 +580,7 @@ class nfsService(BaseClass):
         else:
             raise AttributeError("missing subtype for share")
         if "category" in self.payload:
-            self.category = self._translate_path(self.payload['subtype'])
+            self.category = self._translate_path(self.payload['category'])
         if self.subtype:
             self.basedir = os.path.join(self.config.mediadir, self.subtype)
         else:
@@ -592,37 +594,35 @@ class nfsService(BaseClass):
         self.origin = self.get_origin()
         if not self.origin:
             return
+        if self.config.use_hostname:
+            self.sharename = (lambda host: host.split('.')[0])(
+                self.host)
+        else:
+            self.sharename = self.name
         self.target = self.get_target()
         if self.subtype == "vdr":
-            if not self.wait_for_path(self.origin):
-                return
-            else:
-                if self.config.use_hostname:
-                    self.safe_sharename = (lambda host: host.split('.')[0])(
-                        self.host)
-                else:
-                    self.safe_sharename = self.name
-                # sanitize name for windows clients (vdr with
-                # --dirnames=,,1
-                # or --fat option can display them properly)
-                self.safe_sharename = self.replace_unsafe_chars(
-                    self.safe_sharename)
-                # "/" is not allowed (would create a subdirectory)
-                # " " would hinder the vdr to access a path
-                self.safe_sharename = self.safe_sharename.replace(
-                    "/", "-").replace(" ", "_")
-                self.sharename = "".join(
-                    (self.config.nfs_prefix,
-                     self.safe_sharename,
-                     self.config.nfs_suffix)
-                    )
+            # sanitize name for windows clients (vdr with
+            # --dirnames=,,1
+            # or --fat option can display them properly)
+            self.sharename = self.replace_unsafe_chars(
+                self.sharename)
+            # "/" is not allowed (would create a subdirectory)
+            # " " would hinder the vdr to access a path
+            self.sharename = self.sharename.replace(
+                "/", "-").replace(" ", "_")
+            self.sharename = "".join(
+                (self.config.nfs_prefix,
+                    self.sharename,
+                    self.config.nfs_suffix)
+                )
 
-                self.vdr_target = self.get_vdr_target()
-                if self.vdr_target:
-                    self.create_link()
-                    self.create_extralink(self.vdr_target)
-                    self.update_recdir()
+            self.vdr_target = self.get_vdr_target()
+            if self.vdr_target:
+                self.create_link()
+                self.create_extralink(self.vdr_target)
+                self.update_recdir()
         else:
+            self.sharename = self.safe_sharename
             self.create_link()
 
     def __getattr__(self, attr):
@@ -652,20 +652,13 @@ class nfsService(BaseClass):
             return None
 
     def get_target(self):
-        if self.subtype == "vdr":
-            target = os.path.join(
-                self.basedir,
-                (lambda category: category if category is not None else "")(
-                    self.category),
-                self.sharename
-            )
-        else:
-            return os.path.join(
-                self.basedir,
-                (lambda category: category if category is not None else "")(
-                    self.category),
-                self.sharename
-            )
+        category = (lambda category: category if category is not None else "")(
+            self.category)
+        target = os.path.join(
+            self.basedir,
+            category,
+            self.sharename
+        )
         if os.path.abspath(target).startswith(self.basedir):
             return target
         else:
@@ -679,6 +672,8 @@ class nfsService(BaseClass):
             if self.subtype == "vdr":
                 self.target = "%s for %s" % (self.target,
                                              self.config.hostname)
+            elif self.config.use_hostname:
+                self.target = self.target
             try:
                 super().create_link(self.origin, self.target)
                 logging.debug(
@@ -740,9 +735,9 @@ def update_recdir():
                     logging.info(
                         "Update recdir via SVDRP: %s %s", success, message)
                 else:
-                    raise ConnectionError
+                    raise OSError.ConnectionError
         success = True
-    except (ConnectionError, dbus.exceptions.DBusException):
+    except (OSError, dbus.exceptions.DBusException):
         success = touch_update()
     finally:
         config.job = None
@@ -785,7 +780,7 @@ class Options():
         self.argparser = argparse.ArgumentParser(
             description='link avahi announced nfs shares')
         self.argparser.add_argument('-c', '--config', dest="config",
-                                    action='append', help='config file(s)',
+                                    action='store', help='config file(s)',
                                     default='/etc/avahi-linker/default.cfg',
                                     metavar="CONFIG_FILE"
                                     )
