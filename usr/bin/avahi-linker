@@ -55,7 +55,7 @@ class SVDRPClient(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.telnet.send_command('QUIT')
+        self.send_command('QUIT')
         self.telnet.close()
 
     def send_command(self, line):
