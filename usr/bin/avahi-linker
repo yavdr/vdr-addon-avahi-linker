@@ -159,7 +159,7 @@ class SVDRPConnection:
                 return False, None
             except Exception as error:
                 logging.exception(error)
-                logging.debug("could not conntect to VDR via SVDRP")
+                logging.debug("could not connect to VDR via SVDRP")
                 return False, None
 
     def __exit__(self, type, value, traceback):
