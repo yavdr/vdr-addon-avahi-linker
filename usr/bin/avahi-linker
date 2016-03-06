@@ -48,6 +48,7 @@ class SVDRPClient(object):
         self.host = host
         self.port = port
         self.encoding = 'ascii'
+        self.changed_encoding = False
 
     def __enter__(self):
         self.telnet.open(self.host, self.port)
@@ -59,12 +60,15 @@ class SVDRPClient(object):
         self.telnet.close()
 
     def send_command(self, line):
+        logging.debug("encoding: %s", self.encoding)
         self.telnet.write((line + '\n').encode(self.encoding))
 
     def read_line(self):
         line = self.telnet.read_until(b'\n', 10).decode(self.encoding)
         line = line.rstrip('\r\n')
-        self.encoding = line.rsplit(';', 1)[-1].strip().lower()
+        if not self.changed_encoding:
+            self.encoding = line.rsplit(';', 1)[-1].strip().lower()
+            self.changed_encoding = True
         if len(line) < 4:
             return None
         return int(line[0:3]), line[3] == '-', line[4:]
