@@ -1,0 +1,12 @@
+[Unit]
+description=vdr-net-monitor
+After=vdr.service dbus.service network.target
+Requires=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/vdr-net-monitor
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

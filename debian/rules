@@ -3,4 +3,10 @@
 export DH_VERBOSE=1
 
 %:
-	dh  $@
+	dh  $@ --with=systemd
+
+override_dh_installinit:
+	dh_installinit --name=avahi-linker
+	dh_installinit --name=vdr-update-monitor
+	dh_installinit --name=vdr-net-monitor
+	dh_installinit --name=prevent-umount-on-pause.service

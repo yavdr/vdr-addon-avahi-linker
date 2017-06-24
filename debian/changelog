@@ -1,53 +1,61 @@
-vdr-addon-avahi-linker (0.0.3.3-0yavdr1~trustyubuntu1) trusty; urgency=medium
+vdr-addon-avahi-linker (20160313134933unstable-9yavdr0~xenial) xenial; urgency=medium
 
-  * fix dependencies 
+  * install avahi services as examples
 
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 10 Jan 2016 17:39:36 +0100
+ -- Alexander Grothe <seahawk1986@gmx.de>  Thu, 22 Jun 2017 13:16:16 +0200
 
-vdr-addon-avahi-linker (0.0.3.3-0yavdr1~trusty) trusty; urgency=medium
+vdr-addon-avahi-linker (20160313134933unstable-8yavdr0~xenial) xenial; urgency=medium
+
+  * add autofs override to start after network.target
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 15 May 2016 09:09:32 +0200
+
+vdr-addon-avahi-linker (20160313134933unstable-7yavdr0~xenial) xenial; urgency=medium
+
+  * reduce startup dependencies, ordering them is enough
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Thu, 28 Apr 2016 08:25:43 +0200
+
+vdr-addon-avahi-linker (20160313134933unstable-6yavdr0~xenial) xenial; urgency=medium
+
+  * fix typo in service file
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Tue, 26 Apr 2016 20:27:24 +0200
+
+vdr-addon-avahi-linker (20160313134933unstable-5yavdr0~xenial) xenial; urgency=medium
+
+  * add service for prevent-umount-on-pause
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Mon, 25 Apr 2016 19:58:59 +0200
+
+vdr-addon-avahi-linker (20160313134933unstable-4yavdr0~xenial) xenial; urgency=medium
+
+  * update package to install systemd services
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Mon, 25 Apr 2016 19:51:10 +0200
+
+vdr-addon-avahi-linker (20160313134933unstable-3yavdr0~xenial) xenial; urgency=medium
 
   * rebuild
 
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 10 Jan 2016 17:37:13 +0100
+ -- Alexander Grothe <seahawk1986@gmx.de>  Mon, 25 Apr 2016 19:03:16 +0200
 
-vdr-addon-avahi-linker (0.0.3.3-0yavdr0~trusty) trusty; urgency=medium
+vdr-addon-avahi-linker (20160313134933unstable-2yavdr0~xenial) xenial; urgency=medium
 
-  * ported to python3
+  * update postinst script
 
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 10 Jan 2016 16:05:05 +0100
+ -- Alexander Grothe <seahawk1986@gmx.de>  Mon, 25 Apr 2016 17:38:32 +0200
 
-vdr-addon-avahi-linker (0.0.3.2-0yavdr1~trusty) trusty; urgency=medium
+vdr-addon-avahi-linker (20160313134933unstable-1yavdr0~xenial) xenial; urgency=medium
 
-  * rebuild
+  * rebuild for xenial
+  * add systemd services
 
- -- Lars Hanisch <dvb@flensrocker.de>  Wed, 05 Aug 2015 22:07:53 +0200
+ -- Alexander Grothe <seahawk1986@gmx.de>  Mon, 25 Apr 2016 16:44:58 +0200
 
-vdr-addon-avahi-linker (0.0.3.2-0yavdr0~precise) precise; urgency=medium
+vdr-addon-avahi-linker (20160313134933unstable-0yavdr0~trusty) trusty; urgency=medium
 
-  * update value in /etc/default/avahi-linker 
+  * Autobuild - b'bd77fd5c37411aed8bbe5bcf07b1f4cf041519a1\n'
+    git://github.com/yavdr/vdr-addon-avahi-linker.git
 
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 11:35:15 +0100
-
-vdr-addon-avahi-linker (0.0.3.1-0yavdr0~precise) precise; urgency=medium
-
-  * fix some install actions 
-
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 11:28:32 +0100
-
-vdr-addon-avahi-linker (0.0.3-0yavdr0) precise; urgency=medium
-
-  * update  
-
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 11:19:26 +0100
-
-vdr-addon-avahi-linker (0.0.2-0yavdr0) precise; urgency=medium
-
-  *  update
-
- -- Alexander Grothe <seahawk1986@gmx.de>  Sun, 12 Jan 2014 10:54:48 +0100
-
-vdr-addon-avahi-linker (0.0.1-0yavdr0) precise; urgency=medium
-
-  * Initial release 
-
- -- Alexander Grothe <seahawk1986@gmx.de>  Fri, 10 May 2013 23:14:21 +0200
+ -- yaVDR Release-Team <release@yavdr.org>  Sun, 13 Mar 2016 13:49:34 +0100

@@ -1,2 +1,6 @@
-etc
+etc/auto.master.d
+etc/avahi-linker
+etc/default
+#etc/init
 usr
+debian/autofs-network.conf lib/systemd/system/autofs.service.d
