@@ -578,7 +578,6 @@ class nfsService(BaseClass):
         self.config = config
         self._translate_path = partial(
             self.translate_path, use_i18n=self.config.use_i18n)
-        print(attributes)
         self.__dict__.update(attributes)
         if "path" in self.payload:
             self.path = self.payload['path']
