@@ -224,6 +224,8 @@ class Config(BaseClass):
         self.static_suffix = self.get_setting('options', 'static_suffix', "")
         self.fat_safe_names = self.get_settingb('options', 'fat_safe_names',
                                                 False)
+        self.use_ipv4_address = self.get_settingb('options', 'use_ipv4_address',
+                                                  True)
         self.nfs_prefix = self.replace_unsafe_chars(self.nfs_prefix)
         self.nfs_suffix = self.replace_unsafe_chars(self.nfs_suffix)
 
@@ -482,6 +484,11 @@ class AvahiService:
                                                                     domain)
             )
             pass
+        elif self.config.use_ipv4_address and protocol == avahi.PROTO_INET6:
+            logging.info(
+                "skin IPv6 announcement for service '%s' type '%s' domain '%s' " % (
+                    name, stype, domain)
+            )
         else:
             logging.debug(
                 "Checking service '%s' type '%s' domain '%s' " % (name,
@@ -571,6 +578,7 @@ class nfsService(BaseClass):
         self.config = config
         self._translate_path = partial(
             self.translate_path, use_i18n=self.config.use_i18n)
+        print(attributes)
         self.__dict__.update(attributes)
         if "path" in self.payload:
             self.path = self.payload['path']
@@ -635,12 +643,21 @@ class nfsService(BaseClass):
         return self.__dict__.get(attr, None)
 
     def get_origin(self):
+        """
+        Uses the class attributes to assemble and return
+        the autofs path for the share
+        """
+        if self.config.use_ipv4_address:
+            host = self.address
+        else:
+            host = self.host.split('.')[0]
+        path = (self.path if not self.path.startswith(os.path.sep)
+                else self.path[1:])
         return os.path.join(
             self.config.autofsdir,
-            (lambda host: host.split('.')[0])(self.host),
-            (lambda path: path if not path.startswith(
-                os.path.sep) else path[1:])(self.path)
-            )
+            host,
+            path
+        )
 
     def get_vdr_target(self):
         vdr_target = os.path.join(
