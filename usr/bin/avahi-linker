@@ -266,6 +266,7 @@ class Config(BaseClass):
                       Media Static remote directories: {mediastaticmounts}
                       use translations: {use_il8n}
                       use fat_safe_names: {fat_safe_names}
+                      use use_ipv4_address: {use_ipv4_address}
                       Prefix for NFS mounts: {nfs_prefix}
                       Suffix for NFS mounts: {nfs_suffix}
                       use dbus2vdr: {dbus2vdr}
@@ -283,6 +284,7 @@ class Config(BaseClass):
                                  nfs_prefix=self.nfs_prefix,
                                  nfs_suffix=self.nfs_suffix,
                                  fat_safe_names=self.fat_safe_names,
+                                 use_ipv4_address=self.use_ipv4_address,
                                  dbus2vdr=self.dbus2vdr,
                                  svdrp_port=self.svdrp_port,
                                  ip_whitelist=self.ip_whitelist,
@@ -479,14 +481,15 @@ class AvahiService:
 
         if flags & avahi.LOOKUP_RESULT_LOCAL:
             logging.info(
-                "skip local service '%s' type '%s' domain '%s' " % (name,
+                "skipping local service '%s' type '%s' domain '%s' " % (name,
                                                                     stype,
                                                                     domain)
             )
             pass
         elif self.config.use_ipv4_address and protocol == avahi.PROTO_INET6:
             logging.info(
-                "skin IPv6 announcement for service '%s' type '%s' domain '%s' " % (
+                "use_ipv4_addres is True, skipping IPv6 announcement for " +
+                "service '%s' type '%s' domain '%s' " % (
                     name, stype, domain)
             )
         else:
