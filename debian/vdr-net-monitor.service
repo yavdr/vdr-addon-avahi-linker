@@ -1,5 +1,5 @@
 [Unit]
-description=vdr-net-monitor
+Description=vdr-net-monitor
 After=vdr.service dbus.service network.target
 Requires=dbus.service
 
