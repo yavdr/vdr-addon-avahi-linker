@@ -477,17 +477,13 @@ class AvahiService:
 
         if flags & avahi.LOOKUP_RESULT_LOCAL:
             logging.info(
-                "skip local service '%s' type '%s' domain '%s' " % (name,
-                                                                    stype,
-                                                                    domain)
-            )
+                "skip local service '%s' type '%s' domain '%s' " % (
+                    name, stype, domain))
             pass
         else:
             logging.debug(
-                "Checking service '%s' type '%s' domain '%s' " % (name,
-                                                                  stype,
-                                                                  domain)
-            )
+                "Checking service '%s' type '%s' domain '%s' " % (
+                    name, stype, domain))
             server.ResolveService(
                 interface, protocol, name, stype,
                 domain, avahi.PROTO_UNSPEC, dbus.UInt32(0),
@@ -501,8 +497,8 @@ class AvahiService:
     def service_resolved(self, interface, protocol, name, stype,
                          domain, host, aprotocol, address,
                          port, raw_payload, flags):
-        sharename = "{share} on {host}".format(share=name,
-                                               host=host)
+        sharename = "{share} on {host}".format(
+                share=name, host=host)
         attributes = {
             'interface': interface,
             'protocol': protocol,
@@ -517,10 +513,8 @@ class AvahiService:
             'flags': flags,
             'sharename': sharename,
         }
-        _sharename = "{share} on {host}: {txt}".format(share=name,
-                                                       host=host,
-                                                       txt=attributes['payload']
-                                                       )
+        _sharename = "{share} on {host}: {txt}".format(
+                share=name, host=host, txt=attributes['payload'])
 
         logging.debug("avahi-service resolved: %s", _sharename)
         ip = ipaddress.ip_address(address)
@@ -536,14 +530,12 @@ class AvahiService:
                 self.linked[_sharename] = share
             else:
                 logging.debug(
-                    "skipped share {0} on {1}: already used".format(name,
-                                                                    host)
-                )
+                    "skipped share {0} on {1}: already used".format(
+                        name, host))
         else:
             logging.debug(
                 "skipped share {0} on {1}: IP {2} is set to be ignored".format(
-                    name, host, address)
-            )
+                    name, host, address))
 
     def service_removed(self, interface, protocol, name, typ, domain, flags):
         logging.info("service removed: %s %s %s %s %s %s" % (
@@ -591,8 +583,7 @@ class nfsService(BaseClass):
         else:
             raise AttributeError(
                 "missing subtype for share {}\nattributes: {}".format(
-                    self.name, self.payload)
-            )
+                    self.name, self.payload))
         self.update_recdir = self.config.update_recdir
         self.counter = 0
         self.job = None
@@ -600,8 +591,7 @@ class nfsService(BaseClass):
         if not self.origin:
             return
         if self.config.use_hostname:
-            self.sharename = (lambda host: host.split('.')[0])(
-                self.host)
+            self.sharename = self.host.split('.')[0]
         else:
             self.sharename = self.name
         self.target = self.get_target()
@@ -609,17 +599,14 @@ class nfsService(BaseClass):
             # sanitize name for windows clients (vdr with
             # --dirnames=,,1
             # or --fat option can display them properly)
-            self.sharename = self.replace_unsafe_chars(
-                self.sharename)
+            self.sharename = self.replace_unsafe_chars(self.sharename)
             # "/" is not allowed (would create a subdirectory)
             # " " would hinder the vdr to access a path
-            self.sharename = self.sharename.replace(
-                "/", "-").replace(" ", "_")
+            self.sharename = self.sharename.replace( "/", "-").replace(" ", "_")
             self.sharename = "".join(
                 (self.config.nfs_prefix,
-                    self.sharename,
-                    self.config.nfs_suffix)
-                )
+                 self.sharename,
+                 self.config.nfs_suffix))
 
             self.vdr_target = self.get_vdr_target()
             if self.vdr_target:
@@ -637,31 +624,26 @@ class nfsService(BaseClass):
     def get_origin(self):
         return os.path.join(
             self.config.autofsdir,
-            (lambda host: host.split('.')[0])(self.host),
-            (lambda path: path if not path.startswith(
-                os.path.sep) else path[1:])(self.path)
+            self.host.split('.')[0],
+            self.path.lstrip(os.path.sep)
             )
 
     def get_vdr_target(self):
         vdr_target = os.path.join(
             self.config.vdrdir,
-            (lambda category: category if category is not None else "")(
-                self.category),
+            self.category if self.category is not None else "",
             self.sharename
         )
         if os.path.abspath(vdr_target).startswith(self.config.vdrdir):
             return vdr_target
         else:
-            logging.error("Path %s is outside of vdrdir - ignoring" %
-                          vdr_target)
+            logging.error("Path %s is outside of vdrdir - ignoring", vdr_target)
             return None
 
     def get_target(self):
-        category = (lambda category: category if category is not None else "")(
-            self.category)
         target = os.path.join(
             self.basedir,
-            category,
+            self.category if self.category is not None else "",
             self.sharename
         )
         if os.path.abspath(target).startswith(self.basedir):
@@ -671,30 +653,19 @@ class nfsService(BaseClass):
             return None
 
     def create_link(self):
-        if (self.target and not os.path.islink(self.target)
-                and not os.path.exists(self.target)):
-            self.mkdir_p(os.path.dirname(self.target))
-            if self.subtype == "vdr":
-                self.target = "%s for %s" % (self.target,
-                                             self.config.hostname)
-            elif self.config.use_hostname:
-                self.target = self.target
-            try:
-                super().create_link(self.origin, self.target)
-                logging.debug(
-                    "created symlink from {} to {} for {}".format(
-                        origin=self.origin, target=self.target,
-                        share=self.sharename
-                    )
-                )
-            except:
-                logging.debug(
-                    "symlink from '{}' to '{}' for '{}' already exists".format(
-                        self.origin,
-                        self.target,
-                        self.sharename
-                    )
-                )
+        if (not self.target or os.path.islink(self.target)
+                or os.path.exists(self.target)):
+            return
+        self.mkdir_p(os.path.dirname(self.target))
+        if self.subtype == "vdr":
+            self.target = "%s for %s" % (self.target, self.config.hostname)
+        try:
+            super().create_link(self.origin, self.target)
+            logging.debug("created symlink from %s to %s for %s",
+                    origin=self.origin, target=self.target, share=self.sharename)
+        except:
+            logging.debug("symlink from '%s' to '%s' for '%s' already exists",
+                    self.origin, self.target, self.sharename)
 
     def create_extralink(self, target):
         if target and not os.path.islink(target) and not os.path.exists(target):
@@ -758,7 +729,7 @@ def touch_update():
             os.utime(updatepath, None)
         except OSError as e:
             logging.error(e)
-            logging.info("Create %s" % updatepath)
+            logging.info("Create %s", updatepath)
             try:
                 open(updatepath, 'a').close()
                 shutil.chown(updatepath, 'vdr', 'vdr')
@@ -773,7 +744,7 @@ def sigint(*args, **kwargs):
     logging.info("got %s" % signal)
     locallinker.unlink_all()
     avahiservice.unlink_all()
-    logging.debug('shutting down, vdr is running: %s' % config.vdr_running)
+    logging.debug('shutting down, vdr is running: %s', config.vdr_running)
     if config.vdr_running:
         update_recdir()
     GObject.MainLoop().quit()
@@ -784,11 +755,12 @@ class Options():
     def __init__(self):
         self.argparser = argparse.ArgumentParser(
             description='link avahi announced nfs shares')
-        self.argparser.add_argument('-c', '--config', dest="config",
-                                    action='store', help='config file(s)',
-                                    default='/etc/avahi-linker/default.cfg',
-                                    metavar="CONFIG_FILE"
-                                    )
+        self.argparser.add_argument(
+                '-c', '--config', dest="config",
+                action='store', help='config file(s)',
+                default='/etc/avahi-linker/default.cfg',
+                metavar="CONFIG_FILE",
+                )
 
     def get_options(self):
         options = vars(self.argparser.parse_args())
@@ -810,7 +782,7 @@ if __name__ == "__main__":
                            avahi.IF_UNSPEC,
                            avahi.PROTO_UNSPEC,
                            NFS_TYPE, 'local', dbus.UInt32(0),
-                           byte_arrays=True
+                           byte_arrays=True,
                            ),
                        ),
         avahi.DBUS_INTERFACE_SERVICE_BROWSER,
