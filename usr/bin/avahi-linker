@@ -797,6 +797,6 @@ if __name__ == "__main__":
     try:
         mainloop.run()
     except KeyboardInterrupt:
-        sigint("KeyboardInterrup")
+        sigint("KeyboardInterrupt")
     except Exception as e:
         sigint(e)
