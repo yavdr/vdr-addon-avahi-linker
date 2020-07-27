@@ -1,3 +1,10 @@
+vdr-addon-avahi-linker (202007271806-0yavdr0~focal) focal; urgency=medium
+
+  * better error handling if a avahi announcement is missing attributes
+  * use GLib instead of GObject and replace other deprecated methods 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Mon, 27 Jul 2020 18:05:17 +0200
+
 vdr-addon-avahi-linker (20160313134933unstable-9yavdr0~xenial) xenial; urgency=medium
 
   * install avahi services as examples
