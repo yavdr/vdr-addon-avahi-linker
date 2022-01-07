@@ -8,7 +8,7 @@
 import dbus
 import dbus2vdr
 import os
-from configparser import ConfigParser
+import configparser
 from gi.repository import GObject
 from dbus.mainloop.glib import DBusGMainLoop
 
