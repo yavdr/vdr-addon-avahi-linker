@@ -1,14 +1,21 @@
 #!/usr/bin/python3
+import configparser
+import os
 import socket
 from gi.repository import GObject
 from gi.repository import Gio
 import datetime
 import argparse
 
+config = configparser.ConfigParser()
+config.read('/etc/avahi-linker/default.cfg')
+vdr_video_dir = config.get('targetdirs', 'vdr', fallback='/srv/vdr/video')
+default_watch_file = os.path.join(vdr_video_dir, '.update')
+
 argparser = argparse.ArgumentParser(description='watch vdr .update file and propagate changes via udp')
 argparser.add_argument('-w', '--watch-file', metavar='VIDEODIR/.update',
-                       dest='watch_file', default='/srv/vdr/video/.update',
-                       help='.update file in vdr video dir (default: /srv/vdr/video/.update)')
+                       dest='watch_file', default=default_watch_file,
+                       help=f'.update file in vdr video dir (default: {default_watch_file})')
 argparser.add_argument('-p', '--port',  metavar='PORT', type=int,
                        dest='port', default=5555, help='udp port (default 5555)')
 args = vars(argparser.parse_args())

@@ -8,11 +8,13 @@
 import dbus
 import dbus2vdr
 import os
+from configparser import ConfigParser
 from gi.repository import GObject
 from dbus.mainloop.glib import DBusGMainLoop
 
 last_file = None
-vdrdir = '/srv/vdr/video'
+config_file = "/etc/avahi-linker/default.cfg"
+default_vdrdir = '/srv/vdr/video'
 
 def on_Replay(*args, **kwargs):
     name, path, status, *_ = args
@@ -33,6 +35,9 @@ def cleanup(*args, **kwargs):
         last_file = None
 
 if __name__ == '__main__':
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    vdrdir = config.get('targetdirs', 'vdr', fallback=default_vdrdir)
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     DBusGMainLoop(set_as_default=True)
     vdr = dbus2vdr.DBus2VDR(dbus.SystemBus(), watchdog=True)
