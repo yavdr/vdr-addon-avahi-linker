@@ -123,7 +123,7 @@ class BaseClass:
         #if not os.path.exists(target) and not os.path.islink(target):  # TODO: remove
         # exists on a dead symlink returns false
         # so we need to check if it is a symlink, too
-        if not target.exists() and not os.path.is_symlink():
+        if not target.exists() and not target.is_symlink():
             try:
                 target.parent.mkdir(exist_ok=True, parents=True)
                 #self.mkdir_p(os.path.dirname(target))
