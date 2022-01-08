@@ -1,3 +1,9 @@
+vdr-addon-avahi-linker (20220108143600unstable-0yavdr0~focal) focal; urgency=medium
+
+  * fix vdr links 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sat, 08 Jan 2022 14:35:52 +0100
+
 vdr-addon-avahi-linker (20220108130300unstable-0yavdr0~focal) focal; urgency=medium
 
   * further cleanup 
