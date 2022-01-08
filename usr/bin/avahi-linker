@@ -14,7 +14,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import argparse
 import avahi
-import codecs
 import dbus
 import errno
 import gettext
@@ -31,6 +30,7 @@ import telnetlib
 from configparser import ConfigParser
 from functools import partial
 from pathlib import Path
+from typing import Optional
 from dbus.mainloop.glib import DBusGMainLoop
 
 # Look for nfs shares
@@ -120,18 +120,19 @@ class BaseClass:
         return path
 
     def create_link(self, origin, target: Path):
-        #if not os.path.exists(target) and not os.path.islink(target):  # TODO: remove
         # exists on a dead symlink returns false
         # so we need to check if it is a symlink, too
-        if not target.exists() and not target.is_symlink():
+        #if not target.exists() and not target.is_symlink():
+        if not os.path.exists(target) and not os.path.islink(target):
             try:
-                target.parent.mkdir(exist_ok=True, parents=True)
-                #self.mkdir_p(os.path.dirname(target))
+                #target.parent.mkdir(exist_ok=True, parents=True)
+                self.mkdir_p(os.path.dirname(target))
                 logging.debug("creating directory {}".format(target))
             except OSError as e:
                 logging.error(e)
             try:
-                target.symlink_to(origin)
+                #target.symlink_to(origin)
+                os.symlink(origin, target)
                 logging.debug("creating symlink from {} to {}".format(target, origin))
             except OSError as e:
                 logging.error(e)
@@ -257,47 +258,28 @@ class Config(BaseClass):
 
         logging.info("Started avahi-linker")
         logging.debug(
-            """
+            f"""
                       Current Config:
                       ---------------------------------------------------------
-                      media directory: {mediadir}
-                      VDR recordings: {vdrdir}
-                      autofs directory: {autofsdir}
-                      Local directories: {localdirs}
-                      VDR Static remote directories: {vdrstaticmounts}
-                      Media Static remote directories: {mediastaticmounts}
-                      use translations: {use_il8n}
-                      use fat_safe_names: {fat_safe_names}
-                      Prefix for NFS mounts: {nfs_prefix}
-                      Suffix for NFS mounts: {nfs_suffix}
-                      use dbus2vdr: {dbus2vdr}
-                      SVDRP-Port: {svdrp_port}
-                      IP whitelist: {ip_whitelist}
-                      IP blacklist: {ip_blacklist}
-                      Hostname: {hostname}
-                      Log to file: {log2file}
-                      Logfile: {logfile}
-                      Loglevel: {loglevel}
-                      """.format(
-                mediadir=self.mediadir,
-                vdrdir=self.vdrdir,
-                autofsdir=self.autofsdir,
-                use_il8n=self.use_i18n,
-                nfs_prefix=self.nfs_prefix,
-                nfs_suffix=self.nfs_suffix,
-                fat_safe_names=self.fat_safe_names,
-                dbus2vdr=self.dbus2vdr,
-                svdrp_port=self.svdrp_port,
-                ip_whitelist=self.ip_whitelist,
-                ip_blacklist=self.ip_blacklist,
-                hostname=self.hostname,
-                loglevel=self.loglevel,
-                logfile=self.logfile,
-                log2file=self.log2file,
-                vdrstaticmounts=self.vdrstaticmounts,
-                mediastaticmounts=self.mediastaticmounts,
-                localdirs=self.localdirs,
-            )
+                      media directory: {self.mediadir}
+                      VDR recordings: {self.vdrdir}
+                      autofs directory: {self.autofsdir}
+                      Local directories: {self.localdirs}
+                      VDR Static remote directories: {self.vdrstaticmounts}
+                      Media Static remote directories: {self.mediastaticmounts}
+                      use translations: {self.use_i18n}
+                      use fat_safe_names: {self.fat_safe_names}
+                      Prefix for NFS mounts: {self.nfs_prefix}
+                      Suffix for NFS mounts: {self.nfs_suffix}
+                      use dbus2vdr: {self.dbus2vdr}
+                      SVDRP-Port: {self.svdrp_port}
+                      IP whitelist: {self.ip_whitelist}
+                      IP blacklist: {self.ip_blacklist}
+                      Hostname: {self.hostname}
+                      Log to file: {self.log2file}
+                      Logfile: {self.logfile}
+                      Loglevel: {self.loglevel}
+             """
         )
 
     def read_config_files(self):
@@ -391,7 +373,7 @@ class LocalLinker(BaseClass):
             subtype, localdir, host = self.prepare(subtype, netdir)
             self.create_link(
                 localdir,
-                self.config.mediadir / subtype + self.config.static_suffix
+                self.config.mediadir / (subtype + self.config.static_suffix)
             )
 
         for subtype, netdir in config.vdrstaticmounts.items():
@@ -399,6 +381,7 @@ class LocalLinker(BaseClass):
             logging.debug("static vdr dir: %s" % netdir)
             logging.debug("path is '%s'" % subtype)
             # basedir = os.path.join(self.config.mediadir, subtype)
+            basedir = self.config.mediadir / subtype
             target = self.get_target("vdr", subtype, host)
             vdr_target = self.get_vdr_target(subtype, host)
             self.create_link(localdir, target)
@@ -407,20 +390,18 @@ class LocalLinker(BaseClass):
 
     def prepare(self, subtype, netdir):
         subtype = self._translate_path(subtype)
-        logging.debug("subtype : %s" % subtype)
-        localdir = os.path.join(self.config.autofsdir, netdir)
+        logging.debug(f"{subtype=}, {self.config.autofsdir=}, {netdir=}")
+        localdir = self.config.autofsdir / netdir
         host = netdir.split("/")[0]
         logging.debug("Host: {0} type {1}".format(host, type(host)))
         return subtype, localdir, host
 
-    def get_target(self, vdr, subtype, host):
-        return os.path.join(
-            self.config.mediadir, vdr, subtype, host
-        ) + "(for static {0})".format(self.config.hostname)
+    def get_target(self, vdr, subtype, host) -> Path:
+        return self.config.mediadir / vdr / subtype / (host + f"(for static {self.config.hostname})")
 
     def get_vdr_target(self, subtype, host):
-        target = os.path.join(self.config.vdrdir, subtype) + self.config.static_suffix
-        logging.debug("vdr target: %s" % target)
+        target = self.config.vdrdir / (subtype + self.config.static_suffix)
+        logging.debug(f"vdr target: {target}")
         return target
 
     def unlink_all(self):
@@ -534,6 +515,7 @@ class AvahiService:
                 try:
                     share = nfsService(attributes, self.config)
                 except AttributeError as err:
+                    logging.exception("could not get nfs service")
                     logging.info(
                         "skipped share {0} on {1}: {2}".format(name, host, err)
                     )
@@ -601,7 +583,7 @@ class nfsService(BaseClass):
         if "category" in self.payload:
             self.category = self._translate_path(self.payload["category"])
         if self.subtype:
-            self.basedir = os.path.join(self.config.mediadir, self.subtype)
+            self.basedir = self.config.mediadir / self.subtype
         else:
             raise AttributeError(
                 "missing subtype for share {}\nattributes: {}".format(
@@ -644,33 +626,26 @@ class nfsService(BaseClass):
         # return None if attribute is undefined
         return self.__dict__.get(attr, None)
 
-    def get_origin(self):
-        return os.path.join(
-            self.config.autofsdir,
-            (lambda host: host.split(".")[0])(self.host),
-            (lambda path: path if not path.startswith(os.path.sep) else path[1:])(
-                self.path
-            ),
-        )
+    def get_origin(self) -> Path:
+        logging.debug(f'called get_origin: {self.config.autofsdir / self.host.split(".")[0] / (self.path if not self.path.startswith(os.path.sep) else self.path[1:])=}')
+        return self.config.autofsdir / self.host.split(".")[0] / (self.path if not self.path.startswith(os.path.sep) else self.path[1:])
 
-    def get_vdr_target(self):
-        vdr_target = os.path.join(
-            self.config.vdrdir,
-            (lambda category: category if category is not None else "")(self.category),
-            self.sharename,
-        )
-        if vdr_target.resolve().startswith(self.config.vdrdir):
+    def get_vdr_target(self) -> Optional[Path]:
+        vdr_target = (self.config.vdrdir / (self.category if self.category is not None else "")) / self.sharename
+        logging.debug(f"{vdr_target=} - {os.path.abspath(vdr_target)=}")
+        if os.path.commonprefix([vdr_target, self.config.vdrdir]).startswith(str(self.config.vdrdir)):
+        #if os.path.abspath(vdr_target).startswith(str(self.config.vdrdir)):
             return vdr_target
         else:
             logging.error("Path %s is outside of vdrdir - ignoring" % vdr_target)
             return None
 
-    def get_target(self):
+    def get_target(self) -> Optional[Path]:
         category = (lambda category: category if category is not None else "")(
             self.category
         )
-        target = os.path.join(self.basedir, category, self.sharename)
-        if os.path.abspath(target).startswith(self.basedir):
+        target = self.basedir / category / self.sharename
+        if os.path.abspath(target).startswith(str(self.basedir)):
             return target
         else:
             logging.error("Path %s is outside of basedir - ignoring" % target)
@@ -689,12 +664,9 @@ class nfsService(BaseClass):
                 self.target = self.target
             try:
                 super().create_link(self.origin, self.target)
-                logging.debug(
-                    "created symlink from {} to {} for {}".format(
-                        origin=self.origin, target=self.target, share=self.sharename
-                    )
-                )
-            except:
+                logging.debug(f"created symlink from {self.origin} to {self.target} for {self.sharename}")
+            except Exception as err:
+                logging.exception("could not create symlink")
                 logging.debug(
                     "symlink from '{}' to '{}' for '{}' already exists".format(
                         self.origin, self.target, self.sharename
@@ -755,7 +727,7 @@ def update_recdir():
 
 
 def touch_update():
-    updatepath = os.path.join(config.vdrdir, ".update")
+    updatepath = config.vdrdir / ".update"
     logging.info("fallback to updating %s" % updatepath)
     try:
         os.utime(updatepath, None)
