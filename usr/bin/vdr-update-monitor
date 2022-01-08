@@ -2,7 +2,7 @@
 import configparser
 import os
 import socket
-from gi.repository import GObject
+from gi.repository import GLib
 from gi.repository import Gio
 import datetime
 import argparse
@@ -41,4 +41,4 @@ def file_changed (monitor, file, unknown, event):
 file = Gio.file_new_for_path(args["watch_file"])
 monitor = file.monitor_file(flags=Gio.FileMonitorFlags(0), cancellable=None)
 monitor.connect ("changed", file_changed)
-GObject.MainLoop().run()
+GLib.MainLoop().run()
