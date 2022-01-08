@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from socketserver import UDPServer, BaseRequestHandler
 import argparse
+import configparser
 import dbus
 import socket
 import datetime
@@ -15,7 +16,9 @@ class Handler(BaseRequestHandler):
             remote_hostname, message = self.request[0].decode('utf-8').split(':')
             if (message == 'update' and not remote_hostname == hostname):
                 bus = dbus.SystemBus()
-                dbus2vdr = bus.get_object('de.tvdr.vdr', '/Recordings')
+                
+                vdr_bus_name = f"de.tvdr.vdr{vdr_instance_id if vdr_instance_id else ''}"
+                dbus2vdr = bus.get_object(vdr_bus_name, '/Recordings')
                 answer = dbus.Int32(0)
                 anwer, message = dbus2vdr.Update(
                                     dbus_interface = 'de.tvdr.vdr.recording')
@@ -29,6 +32,10 @@ class Handler(BaseRequestHandler):
 argparser = argparse.ArgumentParser(description='update vdr recdir on UDP message')
 argparser.add_argument('-p', '--port',  metavar='PORT', type=int,
                                               dest='port', default=5555, help='udp port (default 5555)')
+
+config = configparser.ConfigParser()
+config.read('/etc/avahi-linker/default.cfg')
+vdr_instance_id = config.getint('options', 'vdr_instance_id', fallback=0)
 args = vars(argparser.parse_args())
 hostname = socket.gethostname()
 addr = ("",  args['port'])

@@ -1,4 +1,16 @@
-vdr-addon-avahi-linker (202201071433-0yavdr0~focal) focal; urgency=medium
+vdr-addon-avahi-linker (20220108123700unstable-0yavdr0~focal) focal; urgency=medium
+
+  * allow setting a vdr instance id for dbus communication 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sat, 08 Jan 2022 12:37:31 +0100
+
+vdr-addon-avahi-linker (20220107143300unstable-0yavdr0~focal) focal; urgency=medium
+
+  * increase version number 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Fri, 07 Jan 2022 14:53:58 +0100
+
+vdr-addon-avahi-linker (202201071433unstable-0yavdr0~focal) focal; urgency=medium
 
   * fix import of configparser 
 

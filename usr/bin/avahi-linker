@@ -30,6 +30,7 @@ import time
 import telnetlib
 from configparser import ConfigParser
 from functools import partial
+from pathlib import Path
 from dbus.mainloop.glib import DBusGMainLoop
 
 # Look for nfs shares
@@ -99,6 +100,8 @@ class BaseClass:
         return string
 
     def mkdir_p(self, path):
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
         try:
             os.makedirs(path)
         except OSError as exc:
@@ -116,24 +119,28 @@ class BaseClass:
             path = "/".join(elsub)
         return path
 
-    def create_link(self, origin, target):
-        if not os.path.exists(target) and not os.path.islink(target):
+    def create_link(self, origin, target: Path):
+        #if not os.path.exists(target) and not os.path.islink(target):  # TODO: remove
+        # exists on a dead symlink returns false
+        # so we need to check if it is a symlink, too
+        if not target.exists() and not os.path.is_symlink():
             try:
-                self.mkdir_p(os.path.dirname(target))
+                target.parent.mkdir(exist_ok=True, parents=True)
+                #self.mkdir_p(os.path.dirname(target))
                 logging.debug("creating directory {}".format(target))
             except OSError as e:
                 logging.error(e)
             try:
-                os.symlink(origin, target)
+                target.symlink_to(origin)
                 logging.debug("creating symlink from {} to {}".format(target, origin))
             except OSError as e:
                 logging.error(e)
 
-    def unlink(self, target):
-        if os.path.islink(target):
+    def unlink(self, target: Path):
+        if os.path.exists(target): # and os.path.islink(target):  # a dead symlink would not be removed if we check if target is a link
             logging.debug("remove link %s" % target)
             try:
-                os.unlink(target)
+                os.unlink(target) #target.unlink(missing_ok=True)
             except OSError as e:
                 logging.error(e)
 
@@ -199,7 +206,8 @@ class checkDBus4VDR:
                 update_recdir()
 
     def check_dbus2vdr(self):
-        self.vdr = self.bus.get_object("de.tvdr.vdr", "/vdr")
+        vdr_bus_name = f"de.tvdr.vdr{instance_id if instance_id else ''}"
+        self.vdr = self.bus.get_object(vdr_bus_name, "/vdr")
         status = self.vdr.Status(dbus_interface="de.tvdr.vdr.vdr")
         if status == "Ready":
             return True
@@ -212,39 +220,40 @@ class Config(BaseClass):
         self.updateJob = None
         self.parser = self.read_config_files()
         self.set_up_logger()
-        self.mediadir = self.get_setting("targetdirs", "media", "/tmp")
-        self.vdrdir = self.get_setting("targetdirs", "vdr", "/tmp")
-        self.autofsdir = self.get_setting("options", "autofsdir", "/net")
-        self.use_i18n = self.get_settingb("options", "use_i18n", False)
-        self.nfs_prefix = self.get_setting("options", "nfs_prefix", "")
-        self.nfs_suffix = self.get_setting("options", "nfs_suffix", "")
-        self.use_hostname = self.get_settingb("options", "use_hostname", False)
-        self.static_suffix = self.get_setting("options", "static_suffix", "")
-        self.fat_safe_names = self.get_settingb("options", "fat_safe_names", False)
+        self.mediadir = Path(self.parser.get("targetdirs", "media", fallback="/tmp"))
+        self.vdrdir = Path(self.parser.get("targetdirs", "vdr", fallback="/tmp"))
+        self.autofsdir = Path(self.parser.get("options", "autofsdir", fallback="/net"))
+        self.use_i18n = self.parser.getboolean("options", "use_i18n", fallback=False)
+        self.nfs_prefix = self.parser.get("options", "nfs_prefix", fallback="")
+        self.nfs_suffix = self.parser.get("options", "nfs_suffix", fallback="")
+        self.use_hostname = self.parser.getboolean("options", "use_hostname", fallback=False)
+        self.static_suffix = self.parser.get("options", "static_suffix", fallback="")
+        self.fat_safe_names = self.parser.getboolean("options", "fat_safe_names", fallback=False)
         self.nfs_prefix = self.replace_unsafe_chars(self.nfs_prefix)
         self.nfs_suffix = self.replace_unsafe_chars(self.nfs_suffix)
 
-        self.dbus2vdr = self.get_settingb("options", "dbus2vdr", False)
-        self.svdrp_port = int(self.get_setting("options", "svdrp_port", 6419))
+        self.dbus2vdr = self.parser.getboolean("options", "dbus2vdr", fallback=False)
+        self.vdr_instance_id = self.parser.getint("options", "vdr_instance_id", fallback=0)
+        self.svdrp_port = self.parser.getint("options", "svdrp_port", fallback=6419)
 
         self.ip_whitelist = self.set_up_netlist(
             "ip_whitelist",
             default=[ipaddress.ip_network("0.0.0.0/0"), ipaddress.ip_network("0::0/0")],
         )
-        self.ip_blacklist = self.set_up_netlist("ip_blacklist")
+        self.ip_blacklist = self.set_up_netlist("ip_blacklist", default=[])
 
         self.localdirs = {}
         self.mediastaticmounts = {}
         if self.parser.has_section("localdirs"):
             for subtype, directory in self.parser.items("localdirs"):
-                self.localdirs[subtype] = directory
+                self.localdirs[subtype] = Path(directory)
         if self.parser.has_section("media_static_mount"):
             for subtype, directory in self.parser.items("media_static_mount"):
-                self.mediastaticmounts[subtype] = directory
+                self.mediastaticmounts[subtype] = Path(directory)
         self.vdrstaticmounts = {}
         if self.parser.has_section("vdr_static_mount"):
             for subtype, directory in self.parser.items("vdr_static_mount"):
-                self.vdrstaticmounts[subtype] = directory
+                self.vdrstaticmounts[subtype] = Path(directory)
 
         logging.info("Started avahi-linker")
         logging.debug(
@@ -295,23 +304,22 @@ class Config(BaseClass):
         """read all config files for avahi-linker from configdir.
         DO NOT USE logging calls until logging is set up!"""
         parser = ConfigParser()
+        configfile = Path(self.options["config"])
         try:
-            with open(self.options["config"], "r", encoding="utf-8") as f:
-                parser.read_file(f)
+            parser.read(configfile)
         except OSError as e:
             logging.exception(
                 "could not read config file %s: %s", self.options["config"], e.strerror
             )
             sys.exit("could not read config file {}".format(self.options["config"]))
-        configdir = os.path.dirname(self.options["config"])
-        for opt_config in [
-            os.path.join(configdir, u"staticmount.cfg"),
-            os.path.join(configdir, u"localdirs.cfg"),
-            os.path.join(configdir, u"wfe-static.cfg"),
-        ]:
+        configdir = configfile.parent
+        for opt_config in (
+            "staticmount.cfg",
+            "localdirs.cfg",
+            "wfe-static.cfg",
+        ):
             try:
-                with codecs.open(opt_config, "r", encoding="utf-8") as f:
-                    parser.readfp(f)
+                parser.read(configdir / opt_config)
             except OSError as e:
                 pass
             except Exception as e:
@@ -320,7 +328,7 @@ class Config(BaseClass):
                 print("read config file {}".format(opt_config))
         return parser
 
-    def set_up_netlist(self, netlist_name, default=[]):
+    def set_up_netlist(self, netlist_name, default):
         if self.parser.has_option("options", netlist_name):
             ip_list = self.parser.get("options", netlist_name).split()
             netlist = []
@@ -336,9 +344,9 @@ class Config(BaseClass):
         return netlist
 
     def set_up_logger(self):
-        self.log2file = self.get_settingb("Logging", "use_file", False)
-        self.logfile = self.get_setting("Logging", "logfile", "/tmp/avahi-mounter.log")
-        self.loglevel = self.get_setting("Logging", "loglevel", "DEBUG")
+        self.log2file = self.parser.getboolean("Logging", "use_file", fallback=False)
+        self.logfile = self.parser.get("Logging", "logfile", fallback="/tmp/avahi-mounter.log")
+        self.loglevel = self.parser.get("Logging", "loglevel", fallback="DEBUG")
         self.hostname = socket.gethostname()
 
         if self.log2file:
@@ -352,18 +360,6 @@ class Config(BaseClass):
                 level=getattr(logging, self.loglevel),
                 format="%(asctime)-15s %(levelname)-6s %(message)s",
             )
-
-    def get_setting(self, category, setting, default=None):
-        if self.parser.has_option(category, setting):
-            return self.parser.get(category, setting)
-        else:
-            return default
-
-    def get_settingb(self, category, setting, default=False):
-        if self.parser.has_option(category, setting):
-            return self.parser.getboolean(category, setting)
-        else:
-            return default
 
     def update_recdir(self):
         if self.updateJob is not None:
@@ -389,13 +385,13 @@ class LocalLinker(BaseClass):
         )
         for subtype, localdir in config.localdirs.items():
             subtype = self._translate_path(subtype)
-            self.create_link(localdir, os.path.join(config.mediadir, subtype, "local"))
+            self.create_link(localdir, config.mediadir / subtype / "local")
 
         for subtype, netdir in config.mediastaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
             self.create_link(
                 localdir,
-                os.path.join(self.config.mediadir, subtype) + self.config.static_suffix,
+                self.config.mediadir / subtype + self.config.static_suffix
             )
 
         for subtype, netdir in config.vdrstaticmounts.items():
@@ -433,12 +429,12 @@ class LocalLinker(BaseClass):
                 "unlink %s" % os.path.join(self.config.mediadir, subtype, "local")
             )
             subtype = self._translate_path(subtype)
-            self.unlink(os.path.join(self.config.mediadir, subtype, "local"))
+            self.unlink(self.config.mediadir / subtype / "local")
 
         for subtype, netdir in config.mediastaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
             self.unlink(
-                os.path.join(self.config.mediadir, subtype) + self.config.static_suffix
+                self.config.mediadir / (subtype + self.config.static_suffix)
             )
 
         for subtype, netdir in config.vdrstaticmounts.items():
@@ -663,7 +659,7 @@ class nfsService(BaseClass):
             (lambda category: category if category is not None else "")(self.category),
             self.sharename,
         )
-        if os.path.abspath(vdr_target).startswith(self.config.vdrdir):
+        if vdr_target.resolve().startswith(self.config.vdrdir):
             return vdr_target
         else:
             logging.error("Path %s is outside of vdrdir - ignoring" % vdr_target)
@@ -736,8 +732,9 @@ def update_recdir():
     try:
         if config.dbus2vdr is True:
             bus = dbus.SystemBus()
-            dbus2vdr = bus.get_object("de.tvdr.vdr", "/Recordings")
-            answer = dbus.Int32(0)
+            vdr_bus_name = f"de.tvdr.vdr{instance_id if instance_id else ''}"
+            dbus2vdr = bus.get_object(vdr_bus_name, "/Recordings")
+            #answer = dbus.Int32(0)
             anwer, message = dbus2vdr.Update(dbus_interface="de.tvdr.vdr.recording")
             logging.info("Update recdir via dbus: %s %s", answer, message)
         else:
