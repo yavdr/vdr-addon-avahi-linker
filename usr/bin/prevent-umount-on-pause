@@ -9,7 +9,7 @@ import dbus
 import dbus2vdr
 import os
 import configparser
-from gi.repository import GObject
+from gi.repository import GLib
 from dbus.mainloop.glib import DBusGMainLoop
 
 last_file = None
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     vdr_instance_id = config.getint('options', 'vdr_instance_id', fallback=0)
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     DBusGMainLoop(set_as_default=True)
-    vdr = dbus2vdr.DBus2VDR(dbus.SystemBus(), instance_id=vdr_instance_id, watchdog=True)
+    vdr = dbus2vdr.DBus2VDR(dbus.SystemBus(), instance=vdr_instance_id, watchdog=True)
     vdr.onSignal("Replaying", on_Replay)
     vdr.onSignal("Stop", cleanup)
-    GObject.MainLoop().run()
+    GLib.MainLoop().run()
