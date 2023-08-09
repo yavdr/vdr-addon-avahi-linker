@@ -772,8 +772,8 @@ def touch_update():
         logging.info("set access time for .update")
 
 
-def stop_signal(signal):
-    logging.info("got stop signal: %s" % signal)
+def stop_signal(reason):
+    logging.info("got stop signal: %s" % reason)
     locallinker.unlink_all()
     avahiservice.unlink_all()
     logging.debug("shutting down, vdr is running: %s" % config.vdr_running)
