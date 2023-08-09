@@ -17,7 +17,9 @@ import avahi
 import dbus
 import errno
 import gettext
-from gi.repository import GLib
+import gi
+gi.require_version('GLib', '2.0')
+from gi.repository import GLib # type: ignore
 import ipaddress
 import logging
 import os
@@ -32,6 +34,8 @@ from functools import partial
 from pathlib import Path
 from typing import Optional
 from dbus.mainloop.glib import DBusGMainLoop
+
+_ = gettext.gettext
 
 # Look for nfs shares
 NFS_TYPE = "_nfs._tcp"
@@ -92,6 +96,7 @@ class SVDRPClient(object):
 
 class BaseClass:
     unsafe_chars = ("<", ">", "?", "&", '"', ":", "|", "\\", "*")
+    fat_safe_names = False
 
     def replace_unsafe_chars(self, string):
         if self.fat_safe_names:
@@ -99,9 +104,10 @@ class BaseClass:
                 string = string.replace(char, "#{0:x}".format(ord(char)))
         return string
 
-    def mkdir_p(self, path):
+    def mkdir_p(self, path: str):
         p = Path(path)
         p.mkdir(parents=True, exist_ok=True)
+        # TODO: why is this code still there?
         try:
             os.makedirs(path)
         except OSError as exc:
@@ -110,7 +116,7 @@ class BaseClass:
             else:
                 raise
 
-    def translate_path(self, path, use_i18n=False):
+    def translate_path(self, path: str, use_i18n=False):
         elsub = []
         path = path.lstrip(os.path.sep)  # remove leading path separator
         if use_i18n:
@@ -122,26 +128,28 @@ class BaseClass:
     def create_link(self, origin, target: Path):
         # exists on a dead symlink returns false
         # so we need to check if it is a symlink, too
-        #if not target.exists() and not target.is_symlink():
+        # if not target.exists() and not target.is_symlink():
         if not os.path.exists(target) and not os.path.islink(target):
             try:
-                #target.parent.mkdir(exist_ok=True, parents=True)
+                # target.parent.mkdir(exist_ok=True, parents=True)
                 self.mkdir_p(os.path.dirname(target))
                 logging.debug("creating directory {}".format(target))
             except OSError as e:
                 logging.error(e)
             try:
-                #target.symlink_to(origin)
+                # target.symlink_to(origin)
                 os.symlink(origin, target)
                 logging.debug("creating symlink from {} to {}".format(target, origin))
             except OSError as e:
                 logging.error(e)
 
-    def unlink(self, target: Path):
-        if os.path.exists(target): # and os.path.islink(target):  # a dead symlink would not be removed if we check if target is a link
+    def unlink(self, target: Path|str):
+        if os.path.exists(
+            target
+        ):  # and os.path.islink(target):  # a dead symlink would not be removed if we check if target is a link
             logging.debug("remove link %s" % target)
             try:
-                os.unlink(target) #target.unlink(missing_ok=True)
+                os.unlink(target)  # target.unlink(missing_ok=True)
             except OSError as e:
                 logging.error(e)
 
@@ -207,7 +215,9 @@ class checkDBus4VDR:
                 update_recdir()
 
     def check_dbus2vdr(self):
-        vdr_bus_name = f"de.tvdr.vdr{instance_id if instance_id else ''}"
+        vdr_bus_name = (
+            f"de.tvdr.vdr{self.config.instance_id if self.config.instance_id else ''}"
+        )
         self.vdr = self.bus.get_object(vdr_bus_name, "/vdr")
         status = self.vdr.Status(dbus_interface="de.tvdr.vdr.vdr")
         if status == "Ready":
@@ -217,6 +227,7 @@ class checkDBus4VDR:
 class Config(BaseClass):
     def __init__(self, options):
         self.vdr_running = False
+        self.instance_id = 0
         self.options = options
         self.updateJob = None
         self.parser = self.read_config_files()
@@ -227,14 +238,20 @@ class Config(BaseClass):
         self.use_i18n = self.parser.getboolean("options", "use_i18n", fallback=False)
         self.nfs_prefix = self.parser.get("options", "nfs_prefix", fallback="")
         self.nfs_suffix = self.parser.get("options", "nfs_suffix", fallback="")
-        self.use_hostname = self.parser.getboolean("options", "use_hostname", fallback=False)
+        self.use_hostname = self.parser.getboolean(
+            "options", "use_hostname", fallback=False
+        )
         self.static_suffix = self.parser.get("options", "static_suffix", fallback="")
-        self.fat_safe_names = self.parser.getboolean("options", "fat_safe_names", fallback=False)
+        self.fat_safe_names = self.parser.getboolean(
+            "options", "fat_safe_names", fallback=False
+        )
         self.nfs_prefix = self.replace_unsafe_chars(self.nfs_prefix)
         self.nfs_suffix = self.replace_unsafe_chars(self.nfs_suffix)
 
         self.dbus2vdr = self.parser.getboolean("options", "dbus2vdr", fallback=False)
-        self.vdr_instance_id = self.parser.getint("options", "vdr_instance_id", fallback=0)
+        self.vdr_instance_id = self.parser.getint(
+            "options", "vdr_instance_id", fallback=0
+        )
         self.svdrp_port = self.parser.getint("options", "svdrp_port", fallback=6419)
 
         self.ip_whitelist = self.set_up_netlist(
@@ -327,7 +344,9 @@ class Config(BaseClass):
 
     def set_up_logger(self):
         self.log2file = self.parser.getboolean("Logging", "use_file", fallback=False)
-        self.logfile = self.parser.get("Logging", "logfile", fallback="/tmp/avahi-mounter.log")
+        self.logfile = self.parser.get(
+            "Logging", "logfile", fallback="/tmp/avahi-mounter.log"
+        )
         self.loglevel = self.parser.get("Logging", "loglevel", fallback="DEBUG")
         self.hostname = socket.gethostname()
 
@@ -372,8 +391,7 @@ class LocalLinker(BaseClass):
         for subtype, netdir in config.mediastaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
             self.create_link(
-                localdir,
-                self.config.mediadir / (subtype + self.config.static_suffix)
+                localdir, self.config.mediadir / (subtype + self.config.static_suffix)
             )
 
         for subtype, netdir in config.vdrstaticmounts.items():
@@ -388,16 +406,21 @@ class LocalLinker(BaseClass):
             self.create_link(target, vdr_target)
             self.config.update_recdir()
 
-    def prepare(self, subtype, netdir):
+    def prepare(self, subtype: str, netdir: Path):
         subtype = self._translate_path(subtype)
         logging.debug(f"{subtype=}, {self.config.autofsdir=}, {netdir=}")
         localdir = self.config.autofsdir / netdir
-        host = str(netdir).split("/")[0]
+        host = netdir.parts[0]
         logging.debug("Host: {0} type {1}".format(host, type(host)))
         return subtype, localdir, host
 
     def get_target(self, vdr, subtype, host) -> Path:
-        return self.config.mediadir / vdr / subtype / (host + f"(for static {self.config.hostname})")
+        return (
+            self.config.mediadir
+            / vdr
+            / subtype
+            / (host + f"(for static {self.config.hostname})")
+        )
 
     def get_vdr_target(self, subtype, host):
         target = self.config.vdrdir / (subtype + self.config.static_suffix)
@@ -414,9 +437,7 @@ class LocalLinker(BaseClass):
 
         for subtype, netdir in config.mediastaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
-            self.unlink(
-                self.config.mediadir / (subtype + self.config.static_suffix)
-            )
+            self.unlink(self.config.mediadir / (subtype + self.config.static_suffix))
 
         for subtype, netdir in config.vdrstaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
@@ -433,7 +454,7 @@ class AvahiService:
         self.update_recdir = self.config.update_recdir
 
     def print_error(self, *args):
-        logging.error(u"Avahi error_handler:\n{0}".format(args[0]))
+        logging.error("Avahi error_handler:\n{0}".format(args[0]))
 
     def read_payload(self, array):
         attributes = {}
@@ -627,14 +648,24 @@ class nfsService(BaseClass):
         return self.__dict__.get(attr, None)
 
     def get_origin(self) -> Path:
-        logging.debug(f'called get_origin: {self.config.autofsdir / self.host.split(".")[0] / (self.path if not self.path.startswith(os.path.sep) else self.path[1:])=}')
-        return self.config.autofsdir / self.host.split(".")[0] / (self.path if not self.path.startswith(os.path.sep) else self.path[1:])
+        logging.debug(
+            f'called get_origin: {self.config.autofsdir / self.host.split(".")[0] / (self.path if not self.path.startswith(os.path.sep) else self.path[1:])=}'
+        )
+        return (
+            self.config.autofsdir
+            / self.host.split(".")[0]
+            / (self.path if not self.path.startswith(os.path.sep) else self.path[1:])
+        )
 
     def get_vdr_target(self) -> Optional[Path]:
-        vdr_target = (self.config.vdrdir / (self.category if self.category is not None else "")) / self.sharename
+        vdr_target = (
+            self.config.vdrdir / (self.category if self.category is not None else "")
+        ) / self.sharename
         logging.debug(f"{vdr_target=} - {os.path.abspath(vdr_target)=}")
-        if os.path.commonprefix([vdr_target, self.config.vdrdir]).startswith(str(self.config.vdrdir)):
-        #if os.path.abspath(vdr_target).startswith(str(self.config.vdrdir)):
+        if os.path.commonprefix([vdr_target, self.config.vdrdir]).startswith(
+            str(self.config.vdrdir)
+        ):
+            # if os.path.abspath(vdr_target).startswith(str(self.config.vdrdir)):
             return vdr_target
         else:
             logging.error("Path %s is outside of vdrdir - ignoring" % vdr_target)
@@ -664,7 +695,9 @@ class nfsService(BaseClass):
                 self.target = self.target
             try:
                 super().create_link(self.origin, self.target)
-                logging.debug(f"created symlink from {self.origin} to {self.target} for {self.sharename}")
+                logging.debug(
+                    f"created symlink from {self.origin} to {self.target} for {self.sharename}"
+                )
             except Exception as err:
                 logging.exception("could not create symlink")
                 logging.debug(
@@ -694,7 +727,8 @@ class nfsService(BaseClass):
 
     def unlink(self):
         logging.debug("unlinking %s" % self.target)
-        super().unlink(self.target)
+        if self.target is not None:
+            super().unlink(self.target)
         if self.vdr_target and self.subtype == "vdr":
             super().unlink(self.vdr_target)
             self.update_recdir()
@@ -704,10 +738,12 @@ def update_recdir():
     try:
         if config.dbus2vdr is True:
             bus = dbus.SystemBus()
-            vdr_bus_name = f"de.tvdr.vdr{instance_id if instance_id else ''}"
+            vdr_bus_name = (
+                f"de.tvdr.vdr{config.instance_id if config.instance_id else ''}"
+            )
             dbus2vdr = bus.get_object(vdr_bus_name, "/Recordings")
-            #answer = dbus.Int32(0)
-            anwer, message = dbus2vdr.Update(dbus_interface="de.tvdr.vdr.recording")
+            # answer = dbus.Int32(0)
+            answer, message = dbus2vdr.Update(dbus_interface="de.tvdr.vdr.recording")
             logging.info("Update recdir via dbus: %s %s", answer, message)
         else:
             with SVDRPConnection("127.0.0.1", config.svdrp_port) as svdrp_con:
@@ -715,7 +751,7 @@ def update_recdir():
                 if success:
                     logging.info("Update recdir via SVDRP: %s %s", success, message)
                 else:
-                    raise OSError.ConnectionError
+                    raise ConnectionError
         success = True
     except (OSError, dbus.exceptions.DBusException):
         success = touch_update()
@@ -744,8 +780,8 @@ def touch_update():
         logging.info("set access time for .update")
 
 
-def sigint(*args, **kwargs):
-    logging.info("got %s" % signal)
+def stop_signal(signal):
+    logging.info("got stop signal: %s" % signal)
     locallinker.unlink_all()
     avahiservice.unlink_all()
     logging.debug("shutting down, vdr is running: %s" % config.vdr_running)
@@ -810,6 +846,6 @@ if __name__ == "__main__":
     try:
         mainloop.run()
     except KeyboardInterrupt:
-        sigint("KeyboardInterrup")
+        stop_signal("KeyboardInterrupt")
     except Exception as e:
-        sigint(e)
+        stop_signal(e)
