@@ -392,7 +392,7 @@ class LocalLinker(BaseClass):
         subtype = self._translate_path(subtype)
         logging.debug(f"{subtype=}, {self.config.autofsdir=}, {netdir=}")
         localdir = self.config.autofsdir / netdir
-        host = netdir.split("/")[0]
+        host = str(netdir).split("/")[0]
         logging.debug("Host: {0} type {1}".format(host, type(host)))
         return subtype, localdir, host
 
