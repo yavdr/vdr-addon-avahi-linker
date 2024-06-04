@@ -32,7 +32,7 @@ import telnetlib
 from configparser import ConfigParser
 from functools import partial
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from dbus.mainloop.glib import DBusGMainLoop
 
 _ = gettext.gettext
@@ -65,11 +65,11 @@ class SVDRPClient(object):
         self.telnet.read_until(b"\n", 2)
         self.telnet.close()
 
-    def send_command(self, line):
+    def send_command(self, line: str):
         logging.debug("encoding: %s", self.encoding)
         self.telnet.write((line + "\n").encode(self.encoding))
 
-    def read_line(self):
+    def read_line(self) -> tuple[int, bool, str]|None:
         line = self.telnet.read_until(b"\n", 10).decode(self.encoding)
         line = line.rstrip("\r\n")
         if not self.changed_encoding:
@@ -98,7 +98,7 @@ class BaseClass:
     unsafe_chars = ("<", ">", "?", "&", '"', ":", "|", "\\", "*")
     fat_safe_names = False
 
-    def replace_unsafe_chars(self, string):
+    def replace_unsafe_chars(self, string: str):
         if self.fat_safe_names:
             for char in self.unsafe_chars:
                 string = string.replace(char, "#{0:x}".format(ord(char)))
@@ -117,7 +117,7 @@ class BaseClass:
             path = "/".join(elsub)
         return path
 
-    def create_link(self, origin, target: Path):
+    def _create_link(self, origin: Path, target: Path):
         # exists on a dead symlink returns false
         # so we need to check if it is a symlink, too
         # if not target.exists() and not target.is_symlink():
@@ -135,7 +135,7 @@ class BaseClass:
             except OSError as e:
                 logging.error(e)
 
-    def unlink(self, target: Path|str):
+    def _unlink(self, target: Path|str):
         if os.path.exists(
             target
         ):  # and os.path.islink(target):  # a dead symlink would not be removed if we check if target is a link
@@ -147,14 +147,14 @@ class BaseClass:
 
 
 class SVDRPConnection:
-    def __init__(self, host, port):
+    def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
 
     def __enter__(self):
         return self
 
-    def sendCommand(self, command=None, expected=250):
+    def sendCommand(self, command=None, expected=250) -> tuple[bool, Any]:
         if command:
             try:
                 with SVDRPClient(self.host, self.port) as svdrp:
@@ -173,6 +173,7 @@ class SVDRPConnection:
                 logging.exception(error)
                 logging.debug("could not connect to VDR via SVDRP")
                 return False, None
+        return False, None
 
     def __exit__(self, type, value, traceback):
         pass
@@ -378,11 +379,11 @@ class LocalLinker(BaseClass):
         )
         for subtype, localdir in config.localdirs.items():
             subtype = self._translate_path(subtype)
-            self.create_link(localdir, config.mediadir / subtype / "local")
+            self._create_link(localdir, config.mediadir / subtype / "local")
 
         for subtype, netdir in config.mediastaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
-            self.create_link(
+            self._create_link(
                 localdir, self.config.mediadir / (subtype + self.config.static_suffix)
             )
 
@@ -394,8 +395,8 @@ class LocalLinker(BaseClass):
             basedir = self.config.mediadir / subtype
             target = self.get_target("vdr", subtype, host)
             vdr_target = self.get_vdr_target(subtype, host)
-            self.create_link(localdir, target)
-            self.create_link(target, vdr_target)
+            self._create_link(localdir, target)
+            self._create_link(target, vdr_target)
             self.config.update_recdir()
 
     def prepare(self, subtype: str, netdir: Path):
@@ -406,7 +407,7 @@ class LocalLinker(BaseClass):
         logging.debug("Host: {0} type {1}".format(host, type(host)))
         return subtype, localdir, host
 
-    def get_target(self, vdr, subtype, host) -> Path:
+    def get_target(self, vdr: str, subtype: str, host: str) -> Path:
         return (
             self.config.mediadir
             / vdr
@@ -425,16 +426,16 @@ class LocalLinker(BaseClass):
                 "unlink %s" % os.path.join(self.config.mediadir, subtype, "local")
             )
             subtype = self._translate_path(subtype)
-            self.unlink(self.config.mediadir / subtype / "local")
+            self._unlink(self.config.mediadir / subtype / "local")
 
         for subtype, netdir in config.mediastaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
-            self.unlink(self.config.mediadir / (subtype + self.config.static_suffix))
+            self._unlink(self.config.mediadir / (subtype + self.config.static_suffix))
 
         for subtype, netdir in config.vdrstaticmounts.items():
             subtype, localdir, host = self.prepare(subtype, netdir)
-            self.unlink(self.get_target("vdr", subtype, host))
-            self.unlink(self.get_vdr_target(subtype, host))
+            self._unlink(self.get_target("vdr", subtype, host))
+            self._unlink(self.get_vdr_target(subtype, host))
             if self.config.job is None:
                 self.config.job = GLib.timeout_add(500, update_recdir)
 
@@ -686,7 +687,7 @@ class nfsService(BaseClass):
             elif self.config.use_hostname:
                 self.target = self.target
             try:
-                super().create_link(self.origin, self.target)
+                super()._create_link(self.origin, Path(self.target))
                 logging.debug(
                     f"created symlink from {self.origin} to {self.target} for {self.sharename}"
                 )
@@ -698,10 +699,10 @@ class nfsService(BaseClass):
                     )
                 )
 
-    def create_extralink(self, target):
-        if target and not os.path.islink(target) and not os.path.exists(target):
+    def create_extralink(self, target: Path):
+        if self.target and target and not os.path.islink(target) and not os.path.exists(target):
             self.mkdir_p(os.path.dirname(target))
-            os.symlink(self.target, target)
+            os.symlink(Path(self.target), target)
             logging.info("created additional symlink for remote VDR dir")
 
     def wait_for_path(self, path):
@@ -720,9 +721,9 @@ class nfsService(BaseClass):
     def unlink(self):
         logging.debug("unlinking %s" % self.target)
         if self.target is not None:
-            super().unlink(self.target)
+            super()._unlink(self.target)
         if self.vdr_target and self.subtype == "vdr":
-            super().unlink(self.vdr_target)
+            super()._unlink(self.vdr_target)
             self.update_recdir()
 
 

@@ -1,3 +1,15 @@
+vdr-addon-avahi-linker (20240603114100unstable-0yavdr0~jammy) jammy; urgency=medium
+
+  * fix some regressions, improve type annotations
+
+ -- Alexander Grothe <alexander@yavdr09>  Tue, 04 Jun 2024 11:40:57 +0200
+
+vdr-addon-avahi-linker (20230809222200unstable-0yavdr0~jammy) jammy; urgency=medium
+
+  * fix some typos, missing values and operations on the wrong type 
+
+ -- Alexander Grothe <alexander@yavdr09>  Wed, 09 Aug 2023 22:21:50 +0200
+
 vdr-addon-avahi-linker (20220108143600unstable-0yavdr0~focal) focal; urgency=medium
 
   * fix vdr links 
