@@ -2,13 +2,24 @@ Source: vdr-addon-avahi-linker
 Section: video
 Priority: extra
 Maintainer: Alexander Grothe <seahawk1986@hotmail.com>
-Build-Depends: debhelper (>= 10)
+Build-Depends: debhelper (>= 10), dh-python, python3-all, python3-setuptools, pybuild-plugin-pyproject
 Standards-Version: 3.8.4
 Homepage: https://github.com/seahawk1986/arch-avahi-linker
+X-Python3-Version: >= 3.8
 
 Package: vdr-addon-avahi-linker
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${vdr:Depends}, avahi-daemon, nfs-kernel-server, python3, libnss-mdns, python3-avahi, nfs-common, autofs, python3-dbus, python3-dbus2vdr, python3-gi
+Depends: ${misc:Depends},
+ avahi-daemon,
+ autofs,
+ libnss-mdns,
+ nfs-common,
+ nfs-kernel-server,
+ python3,
+ python3-avahi,
+ python3-aionotify,
+ python3-pydantic,
+ python3-sdbus,
 Suggests: vdr
 Description: avahi-linker an VDR-Addon
  avahi-linker an VDR-Addon

@@ -1,5 +1,5 @@
 etc/auto.master.d
 etc/avahi-linker
 etc/default
-usr
+#usr
 debian/autofs-network.conf lib/systemd/system/autofs.service.d

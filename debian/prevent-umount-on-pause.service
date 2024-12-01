@@ -1,8 +1,0 @@
-[Unit]
-After=avahi-linker.service
-
-[Service]
-ExecStart=/usr/bin/prevent-umount-on-pause
-
-[Install]
-WantedBy=multi-user.target

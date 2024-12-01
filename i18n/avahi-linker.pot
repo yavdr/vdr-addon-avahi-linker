@@ -35,6 +35,9 @@ msgstr ""
 msgid "picture"
 msgstr ""
 
+msgid "pictures"
+msgstr ""
+
 msgid "recordigs"
 msgstr ""
 

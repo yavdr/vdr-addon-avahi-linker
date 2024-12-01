@@ -1,3 +1,15 @@
+vdr-addon-avahi-linker (0.2.0-0yavdr0~noble) noble; urgency=medium
+
+  * rebuild for noble 
+
+ -- yaVDR Demo <demo@yavdr-noble-demo>  Sun, 01 Dec 2024 13:12:17 +0100
+
+vdr-addon-avahi-linker (0.2.0-0yavdr0~jammy) jammy; urgency=medium
+
+  * reworked version 
+
+ -- Alexander Grothe <alexander@yavdr09>  Thu, 04 Jul 2024 13:06:32 +0200
+
 vdr-addon-avahi-linker (20240603114100unstable-0yavdr0~jammy) jammy; urgency=medium
 
   * fix some regressions, improve type annotations

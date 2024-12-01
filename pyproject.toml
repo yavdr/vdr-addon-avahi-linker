@@ -1,0 +1,42 @@
+[project]
+name = "avahi-linker"
+description = "automatically mount and link nfs shares based on avahi announcements"
+readme = "README"
+dynamic = ["version"]
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "Alexander Grothe", email = "seahawk1986@gmx.de"},
+]
+dependencies = [
+    # "avahi",
+    "pydantic",
+    "sdbus",
+]
+requires-python = ">= 3.10"
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+avahi-linker = "avahi_linker.__main__:main"
+#vdr-net-monitor = "avahi_linker.vdr_net_monitor:main"
+#prevent-umount-on-pause = "avahi_linker.prevent_umount_on_pause:main"
+
+
+[project.urls]
+Homepage = "https://github.com/yavdr/vdr-addon-avahi-linker"
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = "src/avahi-linker"
+
+[tool.setuptools_scm]
+
+[tool.setuptools.dynamic]
+version = {attr = "avahi_linker.__version__"}
+
