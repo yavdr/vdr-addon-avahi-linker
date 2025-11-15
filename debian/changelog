@@ -1,4 +1,4 @@
-vdr-addon-avahi-linker (0.2.0-0yavdr0~noble) noble; urgency=medium
+vdr-addon-avahi-linker (2:0.2.0-0yavdr0~noble) noble; urgency=medium
 
   * rebuild for noble 
 
