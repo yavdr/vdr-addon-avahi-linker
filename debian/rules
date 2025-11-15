@@ -2,6 +2,9 @@
 
 export DH_VERBOSE=1
 # export PYBUILD_DISABLE=test  # we have no running VDR in the build environment, so SVDRP will always fail
+export PYBUILD_NAME=vdr-addon-avahi-linker
+export PYBUILD_SYSTEM=pyproject
+export DEB_BUILD_OPTIONS=nocheck
 
 %:
 	dh  $@ --with=python3 --buildsystem=pybuild
