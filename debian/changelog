@@ -1,3 +1,16 @@
+vdr-addon-avahi-linker (2:0.2.1-0yavdr0~resolute) resolute; urgency=medium
+
+  * improve error handling for svdrpsend UPDR
+  * modernize autofs mount option 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sat, 31 Jan 2026 17:23:47 +0100
+
+vdr-addon-avahi-linker (2:0.2.0-0yavdr0~resolute) resolute; urgency=medium
+
+  * rebuild for resolute 
+
+ -- Alexander Grothe <seahawk1986@gmx.de>  Sat, 22 Nov 2025 11:28:21 +0100
+
 vdr-addon-avahi-linker (2:0.2.0-0yavdr0~noble) noble; urgency=medium
 
   * rebuild for noble 
