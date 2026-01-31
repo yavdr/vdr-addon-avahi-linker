@@ -75,7 +75,10 @@ async def update_recordings_async(
             await vdr.update()
         else:
             async with SVDRP(port=config.options.svdr_port) as svdrp:
-                await svdrp.send_cmd("UPDR")
+                try:
+                    await svdrp.send_cmd("UPDR")
+                except Exception:
+                    logging.exception("could not update recordings, vdr not running")
             # await send_svdrpcommand("UPDR")
     except Exception as e:
         logging.exception(
